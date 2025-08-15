@@ -1,0 +1,19 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+
+# Environment variables
+.env
+
+# Temporary files
+tmp/
+
+# System files
+.DS_Store
+*.swp
+
+# Agent files
+.claude
+CLAUDE.md
