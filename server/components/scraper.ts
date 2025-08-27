@@ -125,12 +125,6 @@ export class DocumentationScraper {
       
       const { title, content } = await this.extractContentFromPage(page);
 
-      if (content.length < 50) {
-        if (process.env.DEBUG) {
-          console.log(`Skipping ${url} - content too short (${content.length} chars)`);
-        }
-        return null;
-      }
       return { url, title, content };
 
     } catch (error: any) {
@@ -143,6 +137,32 @@ export class DocumentationScraper {
 
   private async extractLinksFromPage(page: Page, baseUrl: string): Promise<string[]> {
     const domain = new URL(baseUrl).hostname;
+    
+    // First, try to expand collapsed navigation sections
+    await page.evaluate(() => {
+      // Find and click expandable navigation elements
+      const expandableSelectors = [
+        'button[aria-expanded="false"]',
+        '[data-collapsed="true"]',
+        '.collapsed button',
+        '[role="button"][aria-expanded="false"]'
+      ];
+      
+      expandableSelectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(element => {
+          try {
+            if (element instanceof HTMLElement) {
+              element.click();
+            }
+          } catch (e) {
+            // Ignore click errors
+          }
+        });
+      });
+    });
+    
+    // Wait a bit for any animations or dynamic loading
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     return await page.evaluate((domain) => {
       const links: string[] = [];
@@ -207,17 +227,11 @@ export class DocumentationScraper {
           
           const { title, content } = await this.extractContentFromPage(page);
           
-          if (content.length < 50) {
-            if (process.env.DEBUG) {
-              console.log(`Skipping ${url} - content too short (${content.length} chars)`);
-            }
-            return null;
-          }
           
           if (process.env.DEBUG) {
-            console.log(`Scraped [${results.length + 1}/${SCRAPER_MAX_PAGES}]: ${title}`);
+            console.log(`Scraped [${results.length + 1}]: ${title}`);
           }
-          onProgress?.(results.length + 1, SCRAPER_MAX_PAGES, title);
+          onProgress?.(results.length + 1, urls.length, title);
           
           return { url, title, content };
           
