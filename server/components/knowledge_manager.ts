@@ -71,10 +71,10 @@ export class KnowledgeManager {
       texts.push(...chunks);
     }
 
-    // Filter out empty/invalid chunks and deduplicate before embedding
-    const validTexts = texts
-      .filter((text) => text.trim().length >= 10)
-      .filter((text, index, array) => array.indexOf(text) === index); // Remove duplicates
+    // Filter out only truly empty/invalid chunks - keep everything else!
+    const validTexts = texts.filter((text) => text.trim().length >= 10);
+
+    console.log(`[KnowledgeManager] Processing ${validTexts.length} text chunks`);
 
     if (validTexts.length === 0) {
       throw new Error('No valid text chunks found for embedding');
