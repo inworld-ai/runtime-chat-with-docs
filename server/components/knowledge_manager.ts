@@ -71,10 +71,8 @@ export class KnowledgeManager {
       texts.push(...chunks);
     }
 
-    // Filter out only truly empty/invalid chunks - keep everything else!
+    // Filter out empty/invalid chunks 
     const validTexts = texts.filter((text) => text.trim().length >= 10);
-
-    console.log(`[KnowledgeManager] Processing ${validTexts.length} text chunks`);
 
     if (validTexts.length === 0) {
       throw new Error('No valid text chunks found for embedding');
@@ -84,6 +82,8 @@ export class KnowledgeManager {
     const batchResult = await this.embedderService.embedBatch(validTexts);
 
     // Create embedded records directly
+    let failureCount = 0;
+    
     for (let i = 0; i < validTexts.length; i++) {
       const embedding = batchResult.embeddings[i];
 
@@ -92,12 +92,17 @@ export class KnowledgeManager {
           text: validTexts[i],
           embedding: embedding,
         });
+      } else {
+        failureCount++;
       }
     }
 
-    if (this.embeddedRecords.length === 0) {
-      throw new Error('No embeddings were successfully generated');
+    // Fail if too many embeddings failed (API key or batch size issue)
+    const failureRate = failureCount / validTexts.length;
+    if (failureRate > 0.5) {
+      throw new Error(`Embedding failure rate too high: ${Math.round(failureRate * 100)}% (${failureCount}/${validTexts.length}).`);
     }
+
   }
 
   public getEmbeddedRecords(): EmbeddedKnowledgeRecord[] {
