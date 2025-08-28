@@ -17,7 +17,7 @@ export const TEXT_GENERATION_CONFIG = {
 export const EMBEDDER_CONFIG = {
   MODEL_NAME: 'BAAI/bge-large-en-v1.5',
   PROVIDER: 'inworld',
-  BATCH_SIZE: 100,
+  BATCH_SIZE: 5, // Reduce batch size to avoid API issues with complex content
   MAX_RETRIES: 3,
   TIMEOUT_MS: 30000,
 };
